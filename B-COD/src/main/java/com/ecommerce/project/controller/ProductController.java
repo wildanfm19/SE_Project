@@ -27,6 +27,7 @@ public class ProductController {
         return "Hellooo!!";
     }
 
+    // Ini untuk mengadd pproduct
     @PostMapping("/admin/categories/{categoryId}/product")
     public ResponseEntity<ProductDTO> addProduct(@Valid @RequestBody ProductDTO productDTO ,
                                                  @PathVariable Long categoryId)
@@ -35,6 +36,7 @@ public class ProductController {
         return new ResponseEntity<>(savedProductDTO,HttpStatus.CREATED);
     }
 
+    // Ini untuk mendapatkan semua product
     @GetMapping("/public/products")
     public ResponseEntity<ProductResponse> getAllProduct(
             @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
@@ -45,6 +47,7 @@ public class ProductController {
         return new ResponseEntity<>(productResponse,HttpStatus.OK);
     }
 
+    // Ini untuk mendapatkan product sesuai category
     @GetMapping("/public/categories/{categoryId}/products")
     public ResponseEntity<ProductResponse> getProductByCategory(
             @PathVariable Long categoryId,
@@ -57,6 +60,7 @@ public class ProductController {
        return new ResponseEntity<>(productResponse, HttpStatus.OK);
     }
 
+    // Ini untuk mendapatkan produk berdasarkan namanya
     @GetMapping("/public/products/keyword/{keyword}")
     public ResponseEntity<ProductResponse> getProductsByKeyword(@PathVariable String keyword,
                                                                 @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
@@ -67,6 +71,7 @@ public class ProductController {
         return new ResponseEntity<>(productResponse, HttpStatus.FOUND);
     }
 
+    //Untuk update product
     @PutMapping("/admin/products/{productId}")
     public ResponseEntity<ProductDTO> updateProduct(@Valid @RequestBody ProductDTO productDTO ,
                                                     @PathVariable Long productId)
@@ -75,12 +80,14 @@ public class ProductController {
         return new ResponseEntity<>(updatedProductDTO,HttpStatus.OK);
     }
 
+    //Ini untuk menghapus product
     @DeleteMapping("/admin/products/{productId}")
     public ResponseEntity<ProductDTO> deleteProduct(@PathVariable Long productId){
         ProductDTO deletedProductDTO = productService.deleteProduct(productId);
         return new ResponseEntity<>(deletedProductDTO , HttpStatus.OK);
     }
 
+    // Ini untuk menambahkan gambar pada product
     @PutMapping("/products/{productId}/image")
     public ResponseEntity<ProductDTO> setImage(@PathVariable Long productId ,
                                                @RequestParam("Image")MultipartFile image) throws IOException {
