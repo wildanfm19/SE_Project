@@ -27,7 +27,7 @@ public class ProductController {
         return "Hellooo!!";
     }
 
-    // Ini untuk mengadd pproduct
+    // Ini untuk menambahkan product
     @PostMapping("/admin/categories/{categoryId}/product")
     public ResponseEntity<ProductDTO> addProduct(@Valid @RequestBody ProductDTO productDTO ,
                                                  @PathVariable Long categoryId)
