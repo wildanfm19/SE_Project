@@ -1,7 +1,9 @@
 package com.ecommerce.project.securityDemo;
+import com.ecommerce.project.jwt.AuthTokenFilter;
 import com.ecommerce.project.jwt.JwtUtils;
 import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -58,7 +60,10 @@ public class GreetingsController {
         Authentication authentication;
         try{
             authentication = authenticationManager
-                    .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername() , loginRequest.getPassword()));
+                    .authenticate(new UsernamePasswordAuthenticationToken(
+                            loginRequest.getUsername(),
+                            loginRequest.getPassword())
+                    );
         } catch (AuthenticationException exception) {
             Map<String , Object> map = new HashMap<>();
             map.put("message" , "Bad credentials");
