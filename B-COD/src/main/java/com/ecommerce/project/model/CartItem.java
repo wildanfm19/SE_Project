@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -24,7 +26,9 @@ public class CartItem {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    private Integer quantity;
-    private double discount;
-    private double productPrice;
+    private Integer Quantity;
+    private Double Discount;
+    private Double productPrice;
+
+
 }
