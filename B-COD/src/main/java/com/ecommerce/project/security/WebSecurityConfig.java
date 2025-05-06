@@ -121,7 +121,7 @@ public class WebSecurityConfig {
 
             Role adminRole = roleRepository.findFirstByRoleName(AppRole.ROLE_ADMIN)
                     .orElseGet(() ->{
-                        Role newAdminRole = new Role(AppRole.ROLE_USER);
+                        Role newAdminRole = new Role(AppRole.ROLE_ADMIN);
                         return roleRepository.save(newAdminRole);
                     });
 
