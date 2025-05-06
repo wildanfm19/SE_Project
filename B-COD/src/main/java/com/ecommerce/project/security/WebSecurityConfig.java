@@ -74,8 +74,8 @@ public class WebSecurityConfig {
                                 .requestMatchers("/v3/api-docs/**").permitAll()
                                 .requestMatchers("/h2-console/**").permitAll()
                                 .requestMatchers("/swagger-ui/**").permitAll()
-                                .requestMatchers("/api/public/**").permitAll()
-                                .requestMatchers("/api/admin/**").permitAll()
+//                                .requestMatchers("/api/public/**").permitAll()
+//                                .requestMatchers("/api/admin/**").permitAll()
                                 .requestMatchers("/api/test/**").permitAll()
                                 .requestMatchers("/images/**").permitAll()
                         .anyRequest().authenticated());
@@ -107,19 +107,19 @@ public class WebSecurityConfig {
     public CommandLineRunner initData(RoleRepository roleRepository , UserRepository userRepository){
         return args -> {
             // Retrieve or create roles
-            Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
+            Role userRole = roleRepository.findFirstByRoleName(AppRole.ROLE_USER)
                     .orElseGet(() ->{
                         Role newUserRole = new Role(AppRole.ROLE_USER);
                         return roleRepository.save(newUserRole);
                     });
 
-            Role sellerRole = roleRepository.findByRoleName(AppRole.ROLE_SELLER)
+            Role sellerRole = roleRepository.findFirstByRoleName(AppRole.ROLE_SELLER)
                     .orElseGet(() ->{
                         Role newSellerRole = new Role(AppRole.ROLE_SELLER);
                         return roleRepository.save(newSellerRole);
                     });
 
-            Role adminRole = roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
+            Role adminRole = roleRepository.findFirstByRoleName(AppRole.ROLE_ADMIN)
                     .orElseGet(() ->{
                         Role newAdminRole = new Role(AppRole.ROLE_USER);
                         return roleRepository.save(newAdminRole);
