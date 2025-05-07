@@ -36,61 +36,124 @@ public class CartServiceImpl implements  CartService{
     @Autowired
     private AuthUtil authUtil;
 
+//    @Override
+//    public CartDTO addProductToCart(Long productId, Integer quantity) {
+//        // Find existing cart or create one
+//        Cart cart = createCart();
+//        // Retrieve Products Detail
+//        Product product = productRepository.findById(productId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Product" , "productId",productId));
+//
+//        CartItem cartItem = cartItemRepository.findCartItemByProductIdAndCartId(cart.getCartId(), productId);
+//        // Validations
+//        if(cartItem != null){
+//            throw new APIException("Product " + product.getProductName() + " already exist in the cart");
+//        }
+//
+//        if(product.getQuantity() == 0){
+//            throw new APIException(product.getProductName() + " is not available");
+//        }
+//
+//        if(product.getQuantity() < quantity){
+//            throw new APIException("Please , make an order of the "+ product.getProductName()
+//                + " less than or equal to the quantity " + product.getQuantity() + ".");
+//        }
+//
+//        // Create Cart Item
+//        CartItem newCartItem = new CartItem();
+//
+//        newCartItem.setProduct(product);
+//        newCartItem.setCart(cart);
+//        newCartItem.setQuantity(quantity);
+//        newCartItem.setDiscount(product.getDiscount());
+//        newCartItem.setProductPrice(product.getSpecialPrice());
+//
+//        cartItemRepository.save(newCartItem);
+//
+//        product.setQuantity(product.getQuantity());
+//
+//        cart.setTotalPrice(cart.getTotalPrice() + (product.getSpecialPrice() * quantity));
+//
+//       cartRepository.save(cart);
+//
+//       CartDTO cartDTO = modelMapper.map(cart,CartDTO.class);
+//
+//       cart = cartRepository.findById(cart.getCartId()).get();
+//
+//        List<CartItem> cartItems = cart.getCartItems();
+//
+//        System.out.println("Cart Items Size: " + cartItems.size());
+//        cartItems.forEach(item -> System.out.println("Item: " + item.getProduct().getProductName()));
+//
+//
+//        Stream<ProductDTO> productStream = cartItems.stream().map(item -> {
+//                    ProductDTO map = modelMapper.map(item.getProduct() , ProductDTO.class);
+//                    map.setQuantity(item.getQuantity());
+//                    return map;
+//                });
+//
+//        cartDTO.setProducts(productStream.toList());
+//
+//        System.out.println("Cart Items: " + cartItems);
+//        System.out.println("CART: " + cartDTO);
+//        System.out.println("ProductStream: " + productStream);
+//
+//        return cartDTO;
+//    }
+
     @Override
     public CartDTO addProductToCart(Long productId, Integer quantity) {
         // Find existing cart or create one
         Cart cart = createCart();
-        // Retrieve Products Detail
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product" , "productId",productId));
 
-        CartItem cartItem = cartItemRepository.findCartItemByProductIdAndCartId(cart.getCartId(), productId);
-        // Validations
-        if(cartItem != null){
-            throw new APIException("Product " + product.getProductName() + " already exist in the cart");
+        // Retrieve Product details
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+
+        // Check if the product already exists in the cart
+        CartItem cartItem = cartItemRepository.findCartItemByProductIdAndCartId(productId, cart.getCartId());
+        if (cartItem != null) {
+            throw new APIException("Product " + product.getProductName() + " already exists in the cart");
         }
 
-        if(product.getQuantity() == 0){
+        // Validate stock
+        if (product.getQuantity() == 0) {
             throw new APIException(product.getProductName() + " is not available");
         }
 
-        if(product.getQuantity() < quantity){
-            throw new APIException("Please , make an order of the "+ product.getProductName()
-                + " less than or equal to the quantity " + product.getQuantity() + ".");
+        if (product.getQuantity() < quantity) {
+            throw new APIException("Please, make an order of " + product.getQuantity() + " or less");
         }
 
-        // Create Cart Item
+        // Create new CartItem
         CartItem newCartItem = new CartItem();
-
         newCartItem.setProduct(product);
         newCartItem.setCart(cart);
         newCartItem.setQuantity(quantity);
         newCartItem.setDiscount(product.getDiscount());
         newCartItem.setProductPrice(product.getSpecialPrice());
 
+        // Add CartItem to cart's list
+        cart.getCartItems().add(newCartItem);
+
+        // Save CartItem and update Cart total
         cartItemRepository.save(newCartItem);
-
-        product.setQuantity(product.getQuantity());
-
         cart.setTotalPrice(cart.getTotalPrice() + (product.getSpecialPrice() * quantity));
+        cartRepository.save(cart);
 
-       cartRepository.save(cart);
+        // Prepare CartDTO
+        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
 
-       CartDTO cartDTO = modelMapper.map(cart,CartDTO.class);
-
+        // Manually map cart items to product DTOs
         List<CartItem> cartItems = cart.getCartItems();
-
-        Stream<ProductDTO> productStream = cartItems.stream().map(item -> {
-                    ProductDTO map = modelMapper.map(item.getProduct() , ProductDTO.class);
+        Stream<ProductDTO> productStream = cartItems.stream()
+                .map(item -> {
+                    ProductDTO map = modelMapper.map(item.getProduct(), ProductDTO.class);
                     map.setQuantity(item.getQuantity());
                     return map;
                 });
 
         cartDTO.setProducts(productStream.toList());
-
-        System.out.println("Cart Items: " + cartItems);
-        System.out.println("CART: " + cartDTO);
-        System.out.println("ProductStream: " + productStream);
 
         return cartDTO;
     }
