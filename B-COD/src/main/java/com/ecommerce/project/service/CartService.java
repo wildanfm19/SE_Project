@@ -14,9 +14,10 @@ public interface CartService {
     CartDTO getCart(String emailId, Long cartId);
 
     
+;
 
-    @Transactional
-    CartDTO updateProductQuantityInCart(Long productId, int quantity);
+    @jakarta.transaction.Transactional
+    CartDTO updateProductQuantityInCart(Long productId, Integer quantity);
 
     String deleteProductFromCart(Long cartId, Long productId);
 }
