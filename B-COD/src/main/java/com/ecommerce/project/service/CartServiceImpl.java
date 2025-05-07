@@ -215,7 +215,7 @@ public class CartServiceImpl implements  CartService{
             throw  new APIException(product.getProductName() + " is not available");
         }
 
-        if(product.getQuantity() < product.getQuantity()){
+        if(product.getQuantity() < quantity){
             throw new APIException("Please , make an order of the " + product.getQuantity() +
                     " or less than or equal to the quantity " + product.getQuantity() + ".");
         }
@@ -236,13 +236,14 @@ public class CartServiceImpl implements  CartService{
 
         if(newQuantity == 0){
             deleteProductFromCart(cartId,productId);
-        }
+        } else {
 
-        cartItem.setProductPrice(product.getSpecialPrice());
-        cartItem.setQuantity(cartItem.getQuantity() + quantity);
-        cartItem.setDiscount(product.getDiscount());
-        cart.setTotalPrice(cart.getTotalPrice() + (cartItem.getProductPrice() * quantity));
-        cartRepository.save(cart);
+            cartItem.setProductPrice(product.getSpecialPrice());
+            cartItem.setQuantity(cartItem.getQuantity() + quantity);
+            cartItem.setDiscount(product.getDiscount());
+            cart.setTotalPrice(cart.getTotalPrice() + (cartItem.getProductPrice() * quantity));
+            cartRepository.save(cart);
+        }
         CartItem updatedItem =cartItemRepository.save(cartItem);
         if(updatedItem.getQuantity() == 0){
             cartItemRepository.deleteById(updatedItem.getCartItemId());
@@ -263,6 +264,9 @@ public class CartServiceImpl implements  CartService{
         return cartDTO;
     }
 
+
+
+    @Transactional
     @Override
     public String deleteProductFromCart(Long cartId, Long productId) {
         Cart cart = cartRepository.findById(cartId)
