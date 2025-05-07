@@ -73,6 +73,8 @@ public class CartServiceImpl implements CartService{
 
         cart.setTotalPrice(cart.getTotalPrice() + (product.getSpecialPrice() * quantity));
 
+        cart.getCartItems().add(newCartItem);
+
         cartRepository.save(cart);
 
         CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
