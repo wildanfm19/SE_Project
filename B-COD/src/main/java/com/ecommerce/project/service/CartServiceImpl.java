@@ -226,6 +226,18 @@ public class CartServiceImpl implements  CartService{
             throw new APIException("Product " + product.getProductName() + " not found");
         }
 
+        // Caculate new quantity
+        int newQuantity = cartItem.getQuantity() + quantity;
+
+        // Validation to prevent negative quantitites
+        if(newQuantity < 0){
+            throw new APIException("The resulting quantity cannot be negative!");
+        }
+
+        if(newQuantity == 0){
+            deleteProductFromCart(cartId,productId);
+        }
+
         cartItem.setProductPrice(product.getSpecialPrice());
         cartItem.setQuantity(cartItem.getQuantity() + quantity);
         cartItem.setDiscount(product.getDiscount());
