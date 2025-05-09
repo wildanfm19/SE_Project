@@ -2,10 +2,13 @@ package com.ecommerce.project.service;
 
 import com.ecommerce.project.exceptions.APIException;
 import com.ecommerce.project.exceptions.ResourceNotFoundException;
+import com.ecommerce.project.model.Cart;
 import com.ecommerce.project.model.Category;
 import com.ecommerce.project.model.Product;
+import com.ecommerce.project.payload.CartDTO;
 import com.ecommerce.project.payload.ProductDTO;
 import com.ecommerce.project.payload.ProductResponse;
+import com.ecommerce.project.repositories.CartRepository;
 import com.ecommerce.project.repositories.CategoryRepository;
 import com.ecommerce.project.repositories.ProductRepository;
 import org.modelmapper.ModelMapper;
@@ -20,12 +23,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private CartService cartService;
 
     @Autowired
     private CategoryRepository categoryRepository;
@@ -36,8 +43,12 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private FileService fileService;
 
+    @Autowired
+    private CartRepository cartRepository;
+
     @Value("${product.image}")
     private String path;
+
 
 
     @Override
@@ -168,20 +179,40 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductDTO updateProduct(Long productId, ProductDTO productDTO) {
         Product productDB = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "productId" , productId));
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
 
-        Product product = modelMapper.map(productDTO , Product.class);
+        // Manually update fields
+        productDB.setProductName(productDTO.getProductName());
+        productDB.setDescription(productDTO.getDescription());
+        productDB.setQuantity(productDTO.getQuantity());
+        productDB.setPrice(productDTO.getPrice());
+        productDB.setDiscount(productDTO.getDiscount());
 
-        productDB.setProductName(product.getProductName());
-        productDB.setDescription(product.getDescription());
-        productDB.setDescription(product.getDescription());
-        productDB.setQuantity(product.getQuantity());
-        productDB.setSpecialPrice(product.getSpecialPrice());
+        // Recalculate special price instead of using one from DTO
+        double specialPrice = productDTO.getPrice() - (productDTO.getDiscount() * 0.01) * productDTO.getPrice();
+        productDB.setSpecialPrice(specialPrice);
 
-        productRepository.save(productDB);
+        Product savedProduct = productRepository.save(productDB);
+
+        // Update related carts
+        List<Cart> carts = cartRepository.findCartsByProductId(productId);
+
+        List<CartDTO> cartDTOS = carts.stream().map(cart -> {
+            CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
+
+            List<ProductDTO> products = cart.getCartItems().stream()
+                    .map(p -> modelMapper.map(p.getProduct(), ProductDTO.class)).toList();
+
+            cartDTO.setProducts(products);
+
+            return cartDTO;
+        }).collect(Collectors.toList());
+
+        cartDTOS.forEach(cart -> cartService.updateProductInCarts(cart.getCartId(), productId));
 
         return modelMapper.map(productDB, ProductDTO.class);
     }
+
 
     @Override
     public ProductDTO deleteProduct(Long productId) {
@@ -190,6 +221,11 @@ public class ProductServiceImpl implements ProductService {
 
         productRepository.delete(productDB);
 
+        // DELETE
+        List<Cart> carts = cartRepository.findCartsByProductId(productId);
+        carts.forEach(cart -> cartService.deleteProductFromCart(cart.getCartId(),productId));
+
+        productRepository.delete(productDB);
         return modelMapper.map(productDB, ProductDTO.class);
     }
 
