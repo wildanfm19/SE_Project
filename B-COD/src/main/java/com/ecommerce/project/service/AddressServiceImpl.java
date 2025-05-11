@@ -52,5 +52,14 @@ public class AddressServiceImpl implements AddressService{
         return modelMapper.map(address, AddressDTO.class);
     }
 
+    @Override
+    public List<AddressDTO> getUserAddress(User user) {
+        List<Address> addresses = user.getAddresses();
+        List<AddressDTO> addressDTOS = addresses.stream()
+                .map(address -> modelMapper.map(address, AddressDTO.class))
+                .toList();
+        return addressDTOS;
+    }
+
 
 }
