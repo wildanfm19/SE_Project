@@ -88,7 +88,7 @@ public class ProductController {
     }
 
     // Ini untuk menambahkan gambar pada product
-    @GetMapping("/public/products/{productId}/image")
+    @PutMapping("/public/products/{productId}/image")
     public ResponseEntity<ProductDTO> setImage(@PathVariable Long productId ,
                                                @RequestParam("Image")MultipartFile image) throws IOException {
         ProductDTO updatedProduct = productService.updateProductImage(productId ,image);
