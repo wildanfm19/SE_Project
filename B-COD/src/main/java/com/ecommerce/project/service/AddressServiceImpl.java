@@ -103,7 +103,7 @@ public class AddressServiceImpl implements AddressService{
 
         userRepository.save(user);
 
-        return "Address deleted successfully";
+        return "Address deleted successfully with addressId: " + addressId;
     }
 
 
