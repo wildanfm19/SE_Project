@@ -32,7 +32,8 @@ public class Address {
 
     @NotBlank
     @Size(min = 4 , message = "City name must be atleast 4 characters!")
-    private String cityName;
+    @Column(name = "city_name")
+    private String city;
 
     @NotBlank
     @Size(min = 2 , message = "State name must be atleast 2 characters!")
@@ -46,14 +47,15 @@ public class Address {
     @Size(min = 6 , message = "ZipCode name must be atleast 6 characters!")
     private String pinCode;
 
-    @ToString.Exclude
-    @ManyToMany(mappedBy = "addresses")
-    private List<User> user = new ArrayList<>();
 
-    public Address(String street, String buildingName, String cityName, String state, String country, String pinCode) {
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    public Address(String street, String buildingName, String city, String state, String country, String pinCode) {
         this.street = street;
         this.buildingName = buildingName;
-        this.cityName = cityName;
+        this.city = city;
         this.state = state;
         this.country = country;
         this.pinCode = pinCode;
