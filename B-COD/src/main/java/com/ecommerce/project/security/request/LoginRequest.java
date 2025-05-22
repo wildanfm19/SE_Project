@@ -9,7 +9,7 @@ public class LoginRequest {
     @NotBlank
     private String password;
 
-    public String getUsername() {
+    public String getUserName() {
         return username;
     }
 

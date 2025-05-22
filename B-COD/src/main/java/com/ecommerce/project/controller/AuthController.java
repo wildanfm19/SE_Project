@@ -52,7 +52,7 @@ public class AuthController {
         Authentication authentication;
         try {
             authentication = authenticationManager
-                    .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+                    .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUserName(), loginRequest.getPassword()));
         } catch (AuthenticationException exception) {
             Map<String, Object> map = new HashMap<>();
             map.put("message", "Bad credentials");
@@ -64,69 +64,64 @@ public class AuthController {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
+        // Fetch complete user data from database
+        User user = userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
 
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(item -> item.getAuthority())
                 .collect(Collectors.toList());
 
-        UserInfoResponse response = new UserInfoResponse(userDetails.getId(),
-                userDetails.getUsername(), roles, jwtCookie.toString());
+        // Updated response with all user fields
+        UserInfoResponse response = new UserInfoResponse(
+                userDetails.getId(),
+                user.getUserName(),
+                user.getEmail(),
+                user.getNim(),
+                user.getJurusan(),
+                user.getPhone(),
+                user.getIsVerifiedBinusian(),
+                roles,
+                jwtCookie.toString()
+        );
 
-        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE,
-                jwtCookie.toString())
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
                 .body(response);
     }
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
+        // Validations
         if (userRepository.existsByUserName(signUpRequest.getUsername())) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Username is already taken!"));
+            return ResponseEntity.badRequest().body("Error: Username taken!");
         }
-
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use!"));
+            return ResponseEntity.badRequest().body("Error: Email taken!");
+        }
+        if (userRepository.existsByNim(signUpRequest.getNim())) {
+            return ResponseEntity.badRequest().body("Error: NIM already registered!");
         }
 
-        // Create new user's account
-        User user = new User(signUpRequest.getUsername(),
-                signUpRequest.getEmail(),
-                encoder.encode(signUpRequest.getPassword()));
+        // Create user
+        User user = new User();
+        user.setUserName(signUpRequest.getUsername());
+        user.setEmail(signUpRequest.getEmail());
+        user.setPassword(encoder.encode(signUpRequest.getPassword()));
+        user.setNim(signUpRequest.getNim());
+        user.setPhone(signUpRequest.getPhone());
+        user.setJurusan(signUpRequest.getJurusan());
+        user.setVerifiedBinusian(true); // Auto-verify
 
-        Set<String> strRoles = signUpRequest.getRole();
-        Set<Role> roles = new HashSet<>();
+        // Set default role (ROLE_USER only)
+        Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
+                .orElseThrow(() -> new RuntimeException("Error: Role USER not found"));
+        user.setRoles(Set.of(userRole));
 
-        if (strRoles == null) {
-            Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
-                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            roles.add(userRole);
-        } else {
-            strRoles.forEach(role -> {
-                switch (role) {
-                    case "admin":
-                        Role adminRole = roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(adminRole);
-
-                        break;
-                    case "seller":
-                        Role modRole = roleRepository.findByRoleName(AppRole.ROLE_SELLER)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(modRole);
-
-                        break;
-                    default:
-                        Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(userRole);
-                }
-            });
-        }
-
-        user.setRoles(roles);
         userRepository.save(user);
-
-        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+        return ResponseEntity.ok("Registration successful!");
     }
 
     @GetMapping("/username")
@@ -139,15 +134,27 @@ public class AuthController {
 
 
     @GetMapping("/user")
-    public ResponseEntity<?> getUserDetails(Authentication authentication){
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+    public ResponseEntity<?> getUserDetails(Authentication authentication) {
+        // Get the complete user data from database
+        User user = userRepository.findByUserName(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(item -> item.getAuthority())
+        // Extract roles
+        List<String> roles = user.getRoles().stream()
+                .map(role -> role.getRoleName().name())
                 .collect(Collectors.toList());
 
-        UserInfoResponse response = new UserInfoResponse(userDetails.getId(),
-                userDetails.getUsername(), roles);
+        // Build comprehensive response
+        UserInfoResponse response = new UserInfoResponse(
+                user.getUserId(),
+                user.getUserName(),
+                user.getEmail(),
+                user.getNim(),
+                user.getJurusan(),
+                user.getPhone(),
+                user.getIsVerifiedBinusian(),
+                roles
+        );
 
         return ResponseEntity.ok().body(response);
     }
