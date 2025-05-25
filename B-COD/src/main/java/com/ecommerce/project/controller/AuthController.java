@@ -166,4 +166,48 @@ public class AuthController {
                         cookie.toString())
                 .body(new MessageResponse("You've been signed out!"));
     }
+
+    @PutMapping("/user/update-limited")
+    public ResponseEntity<?> updateLimitedProfile(
+            @RequestBody Map<String, String> updateData,
+            Authentication authentication
+    ) {
+        User user = userRepository.findByUserName(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Only allow updating username and phone
+        if (updateData.containsKey("username")) {
+            String newUsername = updateData.get("username");
+            if (!user.getUserName().equals(newUsername)) {
+                if (userRepository.existsByUserName(newUsername)) {
+                    return ResponseEntity.badRequest().body("Username already taken");
+                }
+                user.setUserName(newUsername);
+            }
+        }
+
+        if (updateData.containsKey("phone")) {
+            user.setPhone(updateData.get("phone"));
+        }
+
+        userRepository.save(user);
+
+        // Return updated user data
+        List<String> roles = user.getRoles().stream()
+                .map(role -> role.getRoleName().name())
+                .collect(Collectors.toList());
+
+        UserInfoResponse response = new UserInfoResponse(
+                user.getUserId(),
+                user.getUserName(),
+                user.getEmail(),
+                user.getNim(),
+                user.getJurusan(),
+                user.getPhone(),
+                user.getIsVerifiedBinusian(),
+                roles
+        );
+
+        return ResponseEntity.ok(response);
+    }
 }

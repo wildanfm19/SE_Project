@@ -35,10 +35,16 @@ public class Order {
     private Payment payment;
 
     private Double totalAmount;
+
     private String orderStatus;
 
     // Reference to Address
     @ManyToOne
     @JoinColumn(name = "address_id")
     private Address address;
+
+    // Reference to COD Location
+    @ManyToOne
+    @JoinColumn(name = "cod_location_id")
+    private CodLocation codLocation; // Menyimpan lokasi COD yang dipilih
 }
