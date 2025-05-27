@@ -74,7 +74,7 @@ public class WebSecurityConfig {
                         auth.requestMatchers("/api/auth/**").permitAll()
                                 .requestMatchers("/v3/api-docs/**").permitAll()
                                 .requestMatchers("/h2-console/**").permitAll()
-                                .requestMatchers("/api/admin/**").permitAll()
+                                .requestMatchers("/api/admin/**").authenticated()
                                 .requestMatchers("/api/public/**").permitAll()
                                 .requestMatchers("/api/carts/**").permitAll()
                                 .requestMatchers("/swagger-ui/**").permitAll()

@@ -68,7 +68,13 @@ public class AuthController {
         User user = userRepository.findById(userDetails.getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+
+
         ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
+        System.out.println("GENERATED COOKIE : " + jwtCookie.toString());
+        System.out.println("GENERATED COOKIE VALUE : " + jwtCookie.getValue());
+
+
 
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(item -> item.getAuthority())
@@ -84,7 +90,7 @@ public class AuthController {
                 user.getPhone(),
                 user.getIsVerifiedBinusian(),
                 roles,
-                jwtCookie.toString()
+                jwtCookie.getValue()
         );
 
         return ResponseEntity.ok()

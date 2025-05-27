@@ -78,5 +78,12 @@ public class UserInfoResponse {
         return verifiedBinusian;
     }
 
-    // ... (methods lainnya tetap sama)
+    public String getJwtToken() {
+        return jwtToken;
+    }
+
+    public void setJwtToken(String jwtToken) {
+        this.jwtToken = jwtToken;
+    }
+// ... (methods lainnya tetap sama)
 }

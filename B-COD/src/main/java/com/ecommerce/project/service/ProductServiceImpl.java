@@ -5,12 +5,14 @@ import com.ecommerce.project.exceptions.ResourceNotFoundException;
 import com.ecommerce.project.model.Cart;
 import com.ecommerce.project.model.Category;
 import com.ecommerce.project.model.Product;
+import com.ecommerce.project.model.User;
 import com.ecommerce.project.payload.CartDTO;
 import com.ecommerce.project.payload.ProductDTO;
 import com.ecommerce.project.payload.ProductResponse;
 import com.ecommerce.project.repositories.CartRepository;
 import com.ecommerce.project.repositories.CategoryRepository;
 import com.ecommerce.project.repositories.ProductRepository;
+import com.ecommerce.project.util.AuthUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +35,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private CartService cartService;
+
+    @Autowired
+    AuthUtil authUtil;
 
     @Autowired
     private ProductRepository productRepository;
@@ -68,15 +73,22 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
+        User currentUser = authUtil.loggedInUser();
+
+
         if (isProductNotPresent) {
             Product product = modelMapper.map(productDTO, Product.class);
             product.setImage("default.png");
             product.setCategory(category);
+            product.setUser(currentUser);
             double specialPrice = product.getPrice() -
                     ((product.getDiscount() * 0.01) * product.getPrice());
             product.setSpecialPrice(specialPrice);
             Product savedProduct = productRepository.save(product);
-            return modelMapper.map(savedProduct, ProductDTO.class);
+            // Buat respons ProductDTO, termasuk menyisipkan sellerId
+            ProductDTO responseProductDTO = modelMapper.map(savedProduct, ProductDTO.class);
+            responseProductDTO.setSellerId(currentUser.getUserId()); // Tambahkan sellerId secara eksplisit
+            return responseProductDTO;
         } else {
             throw new APIException("Product already exist!!");
         }
