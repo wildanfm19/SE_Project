@@ -23,14 +23,14 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long productId;
 
-    @NotBlank(message = "Product must not be blank")
-    @Size(min = 3 , message = "Product name must contain atleast 3 characters")
+    @NotBlank
+    @Size(min = 3, message = "Product name must contain atleast 3 characters")
     private String productName;
-
-    @NotBlank(message = "Product description must not be blank")
-    @Size(min = 6 , message = "Product description must contain atleast 6 characters")
-    private String description;
     private String image;
+
+    @NotBlank
+    @Size(min = 6, message = "Product description must contain atleast 6 characters")
+    private String description;
     private Integer quantity;
     private double price;
     private double discount;
@@ -41,9 +41,9 @@ public class Product {
     private Category category;
 
     @ManyToOne
-    @JoinColumn(name = "sellerId")
+    @JoinColumn(name = "seller_id")
     private User user;
 
-    @OneToMany(mappedBy = "product" , cascade = {CascadeType.PERSIST , CascadeType.MERGE} , fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.EAGER)
     private List<CartItem> products = new ArrayList<>();
 }

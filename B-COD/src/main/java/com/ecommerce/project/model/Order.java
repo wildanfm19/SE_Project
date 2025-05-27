@@ -25,7 +25,7 @@ public class Order {
     @Column(nullable = false)
     private String email;
 
-    @OneToMany(mappedBy = "order" , cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    @OneToMany(mappedBy = "order", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     private List<OrderItem> orderItems = new ArrayList<>();
 
     private LocalDate orderDate;
@@ -35,10 +35,16 @@ public class Order {
     private Payment payment;
 
     private Double totalAmount;
+
     private String orderStatus;
 
     // Reference to Address
     @ManyToOne
     @JoinColumn(name = "address_id")
     private Address address;
+
+    // Reference to COD Location
+    @ManyToOne
+    @JoinColumn(name = "cod_location_id")
+    private CodLocation codLocation; // Menyimpan lokasi COD yang dipilih
 }

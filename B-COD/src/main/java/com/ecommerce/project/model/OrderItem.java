@@ -7,13 +7,13 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Data
+@Table(name = "order_items")
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "order_items")
 public class OrderItem {
 
     @Id
-    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderItemId;
 
     @ManyToOne
@@ -27,4 +27,5 @@ public class OrderItem {
     private Integer quantity;
     private double discount;
     private double orderedProductPrice;
+
 }
