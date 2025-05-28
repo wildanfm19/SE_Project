@@ -17,4 +17,6 @@ public class ProductDTO {
     private double discount;
     private double specialPrice;
     private Long sellerId;
+    private String sellerName;
+    private Long categoryId;
 }
