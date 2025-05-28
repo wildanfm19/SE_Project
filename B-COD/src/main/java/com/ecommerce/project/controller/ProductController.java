@@ -20,12 +20,29 @@ public class ProductController {
     @Autowired
     ProductService productService;
 
-    @PostMapping("/admin/categories/{categoryId}/product")
-    public ResponseEntity<ProductDTO> addProduct(@Valid @RequestBody ProductDTO productDTO,
-                                                 @PathVariable Long categoryId){
-        ProductDTO savedProductDTO = productService.addProduct(categoryId, productDTO);
-        return new ResponseEntity<>(savedProductDTO, HttpStatus.CREATED);
+    @PostMapping(value = "/admin/product", consumes = "multipart/form-data")
+    public ResponseEntity<ProductDTO> addProduct(
+            @RequestParam("productName") String productName,
+            @RequestParam("description") String description,
+            @RequestParam("quantity") int quantity,
+            @RequestParam("price") double price,
+            @RequestParam("discount") double discount,
+            @RequestParam("categoryId") Long categoryId,
+            @RequestPart(value = "image", required = false) MultipartFile image
+    ) {
+        ProductDTO productDTO = new ProductDTO();
+        productDTO.setProductName(productName);
+        productDTO.setDescription(description);
+        productDTO.setQuantity(quantity);
+        productDTO.setPrice(price);
+        productDTO.setDiscount(discount);
+        productDTO.setCategoryId(categoryId);
+
+        ProductDTO savedProduct = productService.addProduct(productDTO, image);
+        return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
     }
+
+
 
     @GetMapping("/public/products")
     public ResponseEntity<ProductResponse> getAllProducts(
@@ -78,5 +95,17 @@ public class ProductController {
                                                          @RequestParam("image")MultipartFile image) throws IOException {
         ProductDTO updatedProduct = productService.updateProductImage(productId, image);
         return new ResponseEntity<>(updatedProduct, HttpStatus.OK);
+    }
+
+    @GetMapping("/admin/products/seller/{sellerId}")
+    public ResponseEntity<ProductResponse> getProductsBySeller(
+            @PathVariable Long sellerId,
+            @RequestParam(value = "pageNumber", defaultValue = "0", required = false) Integer pageNumber,
+            @RequestParam(value = "pageSize", defaultValue = "10", required = false) Integer pageSize,
+            @RequestParam(value = "sortBy", defaultValue = "price", required = false) String sortBy,
+            @RequestParam(value = "sortOrder", defaultValue = "asc", required = false) String sortOrder) {
+
+        ProductResponse response = productService.getProductsBySeller(sellerId, pageNumber, pageSize, sortBy, sortOrder);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

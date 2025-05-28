@@ -58,42 +58,47 @@ public class ProductServiceImpl implements ProductService {
     private String imageBaseUrl;
 
     @Override
-    public ProductDTO addProduct(Long categoryId, ProductDTO productDTO) {
+    public ProductDTO addProduct(ProductDTO productDTO, MultipartFile image) {
+        long categoryId = productDTO.getCategoryId();
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Category", "categoryId", categoryId));
 
-        boolean isProductNotPresent = true;
+        boolean isProductNotPresent = category.getProducts().stream()
+                .noneMatch(p -> p.getProductName().equalsIgnoreCase(productDTO.getProductName()));
 
-        List<Product> products = category.getProducts();
-        for (Product value : products) {
-            if (value.getProductName().equals(productDTO.getProductName())) {
-                isProductNotPresent = false;
-                break;
-            }
+        if (!isProductNotPresent) {
+            throw new APIException("Product already exists!!");
         }
 
         User currentUser = authUtil.loggedInUser();
 
+        Product product = modelMapper.map(productDTO, Product.class);
 
-        if (isProductNotPresent) {
-            Product product = modelMapper.map(productDTO, Product.class);
-            product.setImage("default.png");
-            product.setCategory(category);
-            product.setUser(currentUser);
-            double specialPrice = product.getPrice() -
-                    ((product.getDiscount() * 0.01) * product.getPrice());
-            product.setSpecialPrice(specialPrice);
-            Product savedProduct = productRepository.save(product);
-            // Buat respons ProductDTO, termasuk menyisipkan sellerId
-            ProductDTO responseProductDTO = modelMapper.map(savedProduct, ProductDTO.class);
-            responseProductDTO.setSellerId(currentUser.getUserId()); // Tambahkan sellerId secara eksplisit
-            responseProductDTO.setSellerName(currentUser.getUserName());
-            return responseProductDTO;
-        } else {
-            throw new APIException("Product already exist!!");
+        try {
+            String fileName = (image != null && !image.isEmpty())
+                    ? fileService.uploadImage(path, image)
+                    : "default.png";
+            product.setImage(fileName);
+        } catch (IOException e) {
+            throw new APIException("Image upload failed: " + e.getMessage());
         }
+
+        product.setCategory(category);
+        product.setUser(currentUser);
+        double specialPrice = product.getPrice() - ((product.getDiscount() * 0.01) * product.getPrice());
+        product.setSpecialPrice(specialPrice);
+
+        Product savedProduct = productRepository.save(product);
+
+        ProductDTO responseProductDTO = modelMapper.map(savedProduct, ProductDTO.class);
+        responseProductDTO.setSellerId(currentUser.getUserId());
+        responseProductDTO.setSellerName(currentUser.getUserName());
+        responseProductDTO.setImage(constructImageUrl(savedProduct.getImage())); // Include full image URL
+
+        return responseProductDTO;
     }
+
 
     @Override
     public ProductResponse getAllProducts(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder, String keyword, String category) {
@@ -161,8 +166,16 @@ public class ProductServiceImpl implements ProductService {
         }
 
         List<ProductDTO> productDTOS = products.stream()
-                .map(product -> modelMapper.map(product, ProductDTO.class))
+                .map(product -> {
+                    ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
+                    productDTO.setImage(constructImageUrl(product.getImage()));
+                    productDTO.setSellerId(product.getUser() != null ? product.getUser().getUserId() : null);
+                    productDTO.setSellerName(product.getUser().getUserName());
+                    return productDTO;
+                })
                 .toList();
+
+
 
         ProductResponse productResponse = new ProductResponse();
         productResponse.setContent(productDTOS);
@@ -185,7 +198,13 @@ public class ProductServiceImpl implements ProductService {
 
         List<Product> products = pageProducts.getContent();
         List<ProductDTO> productDTOS = products.stream()
-                .map(product -> modelMapper.map(product, ProductDTO.class))
+                .map(product -> {
+                    ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
+                    productDTO.setImage(constructImageUrl(product.getImage()));
+                    productDTO.setSellerId(product.getUser() != null ? product.getUser().getUserId() : null);
+                    productDTO.setSellerName(product.getUser().getUserName());
+                    return productDTO;
+                })
                 .toList();
 
         if(products.isEmpty()){
@@ -261,6 +280,37 @@ public class ProductServiceImpl implements ProductService {
         Product updatedProduct = productRepository.save(productFromDb);
         return modelMapper.map(updatedProduct, ProductDTO.class);
     }
+
+    @Override
+    public ProductResponse getProductsBySeller(Long sellerId, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+        Sort sort = sortOrder.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
+        Page<Product> pageProducts = productRepository.findByUserUserId(sellerId, pageable);
+
+        List<ProductDTO> productDTOs = pageProducts.getContent().stream()
+                .map(product -> {
+                    ProductDTO dto = modelMapper.map(product, ProductDTO.class);
+                    dto.setImage(constructImageUrl(product.getImage()));
+                    dto.setSellerId(product.getUser().getUserId());
+                    dto.setSellerName(product.getUser().getUserName());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        ProductResponse response = new ProductResponse();
+        response.setContent(productDTOs);
+        response.setPageNumber(pageProducts.getNumber());
+        response.setPageSize(pageProducts.getSize());
+        response.setTotalElements(pageProducts.getTotalElements());
+        response.setTotalPages(pageProducts.getTotalPages());
+        response.setLastPage(pageProducts.isLast());
+
+        return response;
+    }
+
 
 
 }
