@@ -88,6 +88,7 @@ public class ProductServiceImpl implements ProductService {
             // Buat respons ProductDTO, termasuk menyisipkan sellerId
             ProductDTO responseProductDTO = modelMapper.map(savedProduct, ProductDTO.class);
             responseProductDTO.setSellerId(currentUser.getUserId()); // Tambahkan sellerId secara eksplisit
+            responseProductDTO.setSellerName(currentUser.getUserName());
             return responseProductDTO;
         } else {
             throw new APIException("Product already exist!!");
@@ -120,6 +121,8 @@ public class ProductServiceImpl implements ProductService {
                 .map(product -> {
                     ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
                     productDTO.setImage(constructImageUrl(product.getImage()));
+                    productDTO.setSellerId(product.getUser().getUserId());
+                    productDTO.setSellerName(product.getUser().getUserName());
                     return productDTO;
                 })
                 .toList();
