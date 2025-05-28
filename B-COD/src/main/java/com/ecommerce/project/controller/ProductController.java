@@ -22,12 +22,12 @@ public class ProductController {
 
     @PostMapping(value = "/admin/product", consumes = "multipart/form-data")
     public ResponseEntity<ProductDTO> addProduct(
-            @RequestParam("productName") String productName,
-            @RequestParam("description") String description,
-            @RequestParam("quantity") int quantity,
-            @RequestParam("price") double price,
-            @RequestParam("discount") double discount,
-            @RequestParam("categoryId") Long categoryId,
+            @RequestPart("productName") String productName,
+            @RequestPart("description") String description,
+            @RequestPart("quantity") int quantity,
+            @RequestPart("price") double price,
+            @RequestPart("discount") double discount,
+            @RequestPart("categoryId") Long categoryId,
             @RequestPart(value = "image", required = false) MultipartFile image
     ) {
         ProductDTO productDTO = new ProductDTO();
